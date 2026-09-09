@@ -3,10 +3,9 @@ import { useState } from "react";
 import { products } from "@/data/products";
 import { useStore } from "@/context/StoreContext";
 import { Button } from "@/components/ui/button";
-import { Heart, ShoppingBag, Star, Minus, Plus, Truck, Shield, RotateCcw, Rotate3d, Eye, Sparkles } from "lucide-react";
+import { Heart, ShoppingBag, Star, Minus, Plus, Truck, Shield, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ProductCard from "@/components/ProductCard";
-import Product360Viewer from "@/components/Product360Viewer";
 
 const reviews = [
   { name: "Elena R.", rating: 5, date: "2 weeks ago", text: "Exceeds every expectation. The build quality is exquisite." },
@@ -19,8 +18,7 @@ const ProductDetails = () => {
   const product = products.find((p) => p.id === id);
   const { addToCart, toggleWishlist, isWished } = useStore();
   const [qty, setQty] = useState(1);
-  const [viewMode, setViewMode] = useState<"photos" | "360">("360");
-  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   if (!product) {
     return (
@@ -34,11 +32,12 @@ const ProductDetails = () => {
   const wished = isWished(product.id);
   const related = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
 
-  // Gallery photo variations
-  const photoList = [
-    { src: product.image, label: "Front Angle" },
-    { src: product.image, label: "Close-up Detail", className: "scale-125 object-center" },
-    { src: product.image, label: "Side Perspective", className: "scale-110 object-right" },
+  // Gallery image views
+  const galleryImages = [
+    { src: product.image, label: "Main View" },
+    { src: product.image, label: "Detail View", className: "scale-125 object-center" },
+    { src: product.image, label: "Side Angle", className: "scale-110 object-right" },
+    { src: product.image, label: "Alternate View", className: "scale-105 object-left" },
   ];
 
   return (
@@ -48,128 +47,46 @@ const ProductDetails = () => {
       </nav>
 
       <div className="grid lg:grid-cols-2 gap-12">
+        {/* Product Photos Section */}
         <div className="space-y-4">
-          {/* View Mode Switcher Header */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="inline-flex p-1 rounded-lg bg-surface-elevated border border-border text-xs font-medium">
-              <button
-                type="button"
-                onClick={() => setViewMode("360")}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-smooth relative font-semibold",
-                  viewMode === "360"
-                    ? "bg-primary text-primary-foreground shadow-glow"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Rotate3d className="h-3.5 w-3.5" />
-                <span>360° Angle View</span>
-                <span className="relative flex h-2 w-2 ml-0.5">
-                  <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-foreground opacity-75", viewMode === "360" ? "block" : "hidden")} />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-foreground" />
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setViewMode("photos")}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-smooth",
-                  viewMode === "photos"
-                    ? "bg-card text-foreground shadow-sm font-semibold"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Eye className="h-3.5 w-3.5" />
-                <span>Photos</span>
-              </button>
+          <div className="aspect-square rounded-lg overflow-hidden bg-surface-elevated border border-border group relative">
+            <img
+              src={galleryImages[selectedImageIndex]?.src || product.image}
+              alt={product.name}
+              className={cn(
+                "h-full w-full object-cover transition-transform duration-500 group-hover:scale-105",
+                galleryImages[selectedImageIndex]?.className
+              )}
+            />
+            <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-md bg-background/80 backdrop-blur-sm border border-border text-[11px] text-muted-foreground">
+              {galleryImages[selectedImageIndex]?.label}
             </div>
-
-            <span className="text-[11px] text-muted-foreground hidden sm:inline-flex items-center gap-1.5">
-              <Sparkles className="h-3 w-3 text-primary animate-pulse" />
-              <span>Drag & scroll to rotate</span>
-            </span>
           </div>
 
-          {/* Main Visual Presentation: 360 Angle View or Photo Gallery */}
-          {viewMode === "360" ? (
-            <Product360Viewer product={product} />
-          ) : (
-            <div className="relative aspect-square rounded-lg overflow-hidden bg-surface-elevated border border-border group">
-              <img
-                src={photoList[selectedPhotoIndex]?.src || product.image}
-                alt={product.name}
-                className={cn(
-                  "h-full w-full object-cover transition-transform duration-500 group-hover:scale-105",
-                  photoList[selectedPhotoIndex]?.className
-                )}
-              />
-
-              {/* Floating 360 Shortcut Button on Photo */}
-              <button
-                type="button"
-                onClick={() => setViewMode("360")}
-                className="absolute top-3 right-3 px-3 py-1.5 rounded-full bg-background/85 hover:bg-background border border-primary/40 backdrop-blur-md text-xs font-semibold text-foreground flex items-center gap-1.5 shadow-elevated transition-smooth hover:scale-105 group/btn"
-              >
-                <Rotate3d className="h-4 w-4 text-primary group-hover/btn:rotate-180 transition-transform duration-700" />
-                <span>Open 360° View</span>
-                <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-              </button>
-
-              <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-md bg-background/80 backdrop-blur-sm border border-border text-[11px] text-muted-foreground">
-                {photoList[selectedPhotoIndex]?.label}
-              </div>
-            </div>
-          )}
-
-          {/* Thumbnails Row including 360° Angle View Thumbnail */}
+          {/* Interactive Thumbnails */}
           <div className="grid grid-cols-4 gap-3">
-            {photoList.map((item, i) => (
+            {galleryImages.map((img, i) => (
               <button
                 key={i}
                 type="button"
-                onClick={() => {
-                  setViewMode("photos");
-                  setSelectedPhotoIndex(i);
-                }}
+                onClick={() => setSelectedImageIndex(i)}
                 className={cn(
-                  "relative aspect-square rounded-md overflow-hidden bg-surface-elevated border transition-smooth group",
-                  viewMode === "photos" && selectedPhotoIndex === i
+                  "relative aspect-square rounded-md overflow-hidden bg-surface-elevated border transition-smooth",
+                  selectedImageIndex === i
                     ? "border-primary ring-2 ring-primary/20"
                     : "border-border hover:border-primary/50"
                 )}
               >
-                <img src={item.src} alt="" className={cn("h-full w-full object-cover", item.className)} />
+                <img src={img.src} alt="" className={cn("h-full w-full object-cover", img.className)} />
                 <span className="absolute bottom-1 inset-x-1 text-[9px] bg-background/80 backdrop-blur-sm text-foreground/80 rounded py-0.5 text-center font-medium line-clamp-1">
-                  {item.label}
+                  {img.label}
                 </span>
               </button>
             ))}
-
-            {/* Dedicated 360° Angle View Thumbnail */}
-            <button
-              type="button"
-              onClick={() => setViewMode("360")}
-              className={cn(
-                "relative aspect-square rounded-md overflow-hidden bg-gradient-to-br from-card via-surface-elevated to-primary/10 border transition-smooth flex flex-col items-center justify-center p-2 text-center group",
-                viewMode === "360"
-                  ? "border-primary ring-2 ring-primary/40 shadow-glow"
-                  : "border-border hover:border-primary"
-              )}
-            >
-              <div className="relative mb-1">
-                <Rotate3d className={cn(
-                  "h-6 w-6 text-primary transition-transform duration-700 group-hover:rotate-180",
-                  viewMode === "360" && "animate-spin-slow"
-                )} />
-                <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary animate-ping" />
-              </div>
-              <span className="text-[10px] font-bold text-foreground leading-tight">360° VIEW</span>
-              <span className="text-[8px] text-primary font-medium tracking-tight mt-0.5">Drag & Spin</span>
-            </button>
           </div>
         </div>
 
+        {/* Product Info Section */}
         <div className="space-y-6">
           <div>
             <p className="text-xs uppercase tracking-widest text-primary font-medium">{product.category}</p>
@@ -204,17 +121,6 @@ const ProductDetails = () => {
               <Heart className={cn("h-4 w-4", wished && "fill-primary text-primary")} />
             </Button>
           </div>
-
-          <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            onClick={() => setViewMode(viewMode === "360" ? "photos" : "360")}
-            className="w-full border-primary/30 hover:border-primary hover:bg-primary/5 transition-smooth"
-          >
-            <Rotate3d className="h-4 w-4 mr-2 text-primary" />
-            {viewMode === "360" ? "Switch to Photo Gallery" : "Explore 360° Angle View (Drag & Scroll)"}
-          </Button>
 
           <div className="grid grid-cols-3 gap-4 pt-6 border-t border-border">
             {[[Truck, "Free shipping"], [Shield, "2-year warranty"], [RotateCcw, "30-day returns"]].map(([Icon, t]) => (
