@@ -12,6 +12,7 @@ import adidasWindbreakerImg from "@/assets/adidas_windbreaker.jpg";
 import hmHoodieImg from "@/assets/hm_hoodie.jpg";
 import levisJeansImg from "@/assets/levis_jeans.jpg";
 import zaraCoatImg from "@/assets/zara_coat.jpg";
+import { T_SHIRTS, SNEAKERS, convertToStoreProduct } from "./clothesRailProducts";
 export type Product = {
   id: string;
   name: string;
@@ -191,4 +192,6 @@ export const products: Product[] = [
     description: "Elegant double-breasted long wool blend coat featuring notch lapels, flap pockets, and back vent for effortless layering.",
     featured: true,
   },
+  ...T_SHIRTS.map(convertToStoreProduct),
+  ...SNEAKERS.map(convertToStoreProduct),
 ];

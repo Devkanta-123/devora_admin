@@ -2,14 +2,19 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { products as ALL_PRODUCTS, Product } from "@/data/products";
 import { toast } from "sonner";
 
-type CartItem = { product: Product; qty: number };
+export type CartItem = {
+  product: Product;
+  qty: number;
+  selectedColor?: string;
+  selectedSize?: string;
+};
 
 type StoreCtx = {
   cart: CartItem[];
   wishlist: string[];
-  addToCart: (id: string, qty?: number) => void;
-  removeFromCart: (id: string) => void;
-  updateQty: (id: string, qty: number) => void;
+  addToCart: (id: string, qty?: number, options?: { color?: string; size?: string }) => void;
+  removeFromCart: (id: string, color?: string, size?: string) => void;
+  updateQty: (id: string, qty: number, color?: string, size?: string) => void;
   toggleWishlist: (id: string) => void;
   isWished: (id: string) => boolean;
   clearCart: () => void;
@@ -24,11 +29,11 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
     try {
       const raw = localStorage.getItem("devora_cart");
       if (!raw) return [];
-      const ids: { id: string; qty: number }[] = JSON.parse(raw);
+      const ids: { id: string; qty: number; selectedColor?: string; selectedSize?: string }[] = JSON.parse(raw);
       return ids
-        .map(({ id, qty }) => {
+        .map(({ id, qty, selectedColor, selectedSize }) => {
           const p = ALL_PRODUCTS.find((x) => x.id === id);
-          return p ? { product: p, qty } : null;
+          return p ? { product: p, qty, selectedColor, selectedSize } : null;
         })
         .filter(Boolean) as CartItem[];
     } catch { return []; }
@@ -38,26 +43,72 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
   });
 
   useEffect(() => {
-    localStorage.setItem("devora_cart", JSON.stringify(cart.map((c) => ({ id: c.product.id, qty: c.qty }))));
+    localStorage.setItem(
+      "devora_cart",
+      JSON.stringify(
+        cart.map((c) => ({
+          id: c.product.id,
+          qty: c.qty,
+          selectedColor: c.selectedColor,
+          selectedSize: c.selectedSize,
+        }))
+      )
+    );
   }, [cart]);
   useEffect(() => {
     localStorage.setItem("devora_wishlist", JSON.stringify(wishlist));
   }, [wishlist]);
 
-  const addToCart = (id: string, qty = 1) => {
+  const addToCart = (id: string, qty = 1, options?: { color?: string; size?: string }) => {
     const p = ALL_PRODUCTS.find((x) => x.id === id);
     if (!p) return;
     setCart((prev) => {
-      const found = prev.find((c) => c.product.id === id);
-      if (found) return prev.map((c) => c.product.id === id ? { ...c, qty: c.qty + qty } : c);
-      return [...prev, { product: p, qty }];
+      const found = prev.find(
+        (c) =>
+          c.product.id === id &&
+          c.selectedColor === options?.color &&
+          c.selectedSize === options?.size
+      );
+      if (found) {
+        return prev.map((c) =>
+          c === found ? { ...c, qty: c.qty + qty } : c
+        );
+      }
+      return [
+        ...prev,
+        {
+          product: p,
+          qty,
+          selectedColor: options?.color,
+          selectedSize: options?.size,
+        },
+      ];
     });
-    toast.success(`${p.name} added to cart`);
+    toast.success(`${p.name} added to rail cart`);
   };
-  const removeFromCart = (id: string) => setCart((p) => p.filter((c) => c.product.id !== id));
-  const updateQty = (id: string, qty: number) => {
-    if (qty <= 0) return removeFromCart(id);
-    setCart((p) => p.map((c) => c.product.id === id ? { ...c, qty } : c));
+
+  const removeFromCart = (id: string, color?: string, size?: string) => {
+    setCart((prev) =>
+      prev.filter((c) => {
+        if (c.product.id !== id) return true;
+        if (color !== undefined && c.selectedColor !== color) return true;
+        if (size !== undefined && c.selectedSize !== size) return true;
+        return false;
+      })
+    );
+  };
+
+  const updateQty = (id: string, qty: number, color?: string, size?: string) => {
+    if (qty <= 0) return removeFromCart(id, color, size);
+    setCart((prev) =>
+      prev.map((c) => {
+        const matches =
+          c.product.id === id &&
+          (color === undefined || c.selectedColor === color) &&
+          (size === undefined || c.selectedSize === size);
+        return matches ? { ...c, qty } : c;
+      })
+    );
   };
   const toggleWishlist = (id: string) => {
     setWishlist((prev) => {

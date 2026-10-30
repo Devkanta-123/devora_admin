@@ -7,6 +7,8 @@ import nikeVideo from "@/assets/video/nike.mp4";
 import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/ProductCard";
 import { products, categories } from "@/data/products";
+import { VirtualClothesRail } from "@/components/clothesRail/VirtualClothesRail";
+import { BottomCheckoutRail } from "@/components/clothesRail/BottomCheckoutRail";
 
 const heroSlides = [
   {
@@ -183,43 +185,8 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Featured */}
-      <section className="container py-20">
-        <div className="flex items-end justify-between mb-10">
-          <div>
-            <p className="text-xs uppercase tracking-widest text-primary font-medium mb-2">Featured</p>
-            <h2 className="font-display text-3xl md:text-4xl font-bold">This week's pieces</h2>
-          </div>
-          <Link to="/shop" className="text-sm font-medium hover:text-primary inline-flex items-center gap-1">
-            View all <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-        <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
-          {featured.map((p) => <ProductCard key={p.id} product={p} />)}
-        </div>
-      </section>
-
-      {/* Categories */}
-      <section className="container py-12">
-        <h2 className="font-display text-3xl md:text-4xl font-bold mb-10 text-center">Shop by category</h2>
-        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-          {categories.map((c) => {
-            const sample = products.find((p) => p.category === c.slug);
-            return (
-              <Link key={c.slug} to={`/shop?category=${c.slug}`}
-                className="group relative aspect-[4/5] rounded-lg overflow-hidden border border-border hover-lift">
-                {sample && <img src={sample.image} alt={c.name} loading="lazy"
-                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />}
-                <div className="absolute inset-0 bg-gradient-fade" />
-                <div className="absolute bottom-5 left-5 right-5">
-                  <h3 className="font-display text-xl font-bold text-white">{c.name}</h3>
-                  <p className="text-xs text-white/70">{c.count} items</p>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
+      {/* Virtual Clothes Rail Showroom Experience (Replaced This Week's Pieces & Shop By Category) */}
+      <VirtualClothesRail />
 
       {/* Trending */}
       <section className="container py-20">
@@ -273,6 +240,9 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Sticky Bottom Clothes-Rail Cart */}
+      <BottomCheckoutRail />
     </>
   );
 };
